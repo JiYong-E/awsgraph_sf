@@ -1,0 +1,48 @@
+name: Download Files
+
+on:
+  schedule:
+    - cron: '0 */10 * * *'  # Run every day at 4 PM
+
+# on:
+#   push
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Download Files and Move to datasample
+      run: |
+        python DLI_yesterday.py
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "Jiyong Lee"
+        git config --global user.email "dlwldyd788@gmail.com"
+        
+        # Get yesterday's date in the format YYYY-MM-DD
+        yesterday_date=$(TZ='Asia/Seoul' date -d 'yesterday' +'%Y-%m-%d')
+        
+        # Add and commit changes with yesterday's date in the message
+        git add integrateddata/DLI.json  # Add the specific file
+        git commit -m "Update files - $(TZ='Asia/Seoul' date +'%Y-%m-%d %H:%M:%S')"
+        
+        # Pull changes from the main branch without rebasing
+        git pull origin main --no-rebase
+        
+        # Push changes to the main branch
+        git push
